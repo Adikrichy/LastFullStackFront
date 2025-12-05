@@ -1,0 +1,29 @@
+#root {
+  min-height: 100vh;
+}
+
+/* Плавные переходы для всех интерактивных элементов */
+* {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Улучшенная прокрутка */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 14, 39, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 188, 212, 0.5);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 188, 212, 0.7);
+}

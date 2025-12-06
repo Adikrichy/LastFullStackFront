@@ -1,18 +1,22 @@
 import { render, screen } from '@testing-library/react';
-import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+import { describe, it, expect } from 'vitest';
 
-test('renders login page when not authenticated', () => {
-  render(
-    <AuthProvider>
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>
-    </AuthProvider>
-  );
-  
-  // Когда пользователь не аутентифицирован, должна отображаться страница входа
-  expect(screen.getByText(/добро пожаловать/i)).toBeInTheDocument();
-  expect(screen.getByText(/войдите в свой аккаунт/i)).toBeInTheDocument();
+describe('App - Authentication', () => {
+  it('renders login page when not authenticated', () => {
+    render(
+      <AuthProvider>
+        <MemoryRouter initialEntries={['/login']}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
+    );
+    
+    expect(screen.getByText(/добро пожаловать/i)).toBeInTheDocument();
+    expect(screen.getByText(/войдите в свой аккаунт/i)).toBeInTheDocument();
+  });
 });

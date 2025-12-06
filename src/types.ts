@@ -6,6 +6,7 @@ export interface Car {
   registerNumber: string;
   year: number;
   price: number;
+  ownerId?: number;
 }
 
 export interface Owner {

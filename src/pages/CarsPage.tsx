@@ -1,12 +1,5 @@
 import {
-  Paper,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   IconButton,
   CircularProgress,
   Stack,
@@ -15,8 +8,10 @@ import {
   Snackbar,
   Alert,
   Tooltip,
+  Chip,
 } from '@mui/material';
 import { Add, Delete, Edit, FileDownload } from '@mui/icons-material';
+import { DataGrid, GridColDef, GridCellParams, GridToolbar } from '@mui/x-data-grid';
 import { useState, useEffect } from 'react';
 import { useCars } from '../hooks/useCars';
 import { Car } from '../types';
@@ -145,6 +140,103 @@ export default function CarsPage() {
 
   const cars = carsQuery.data ?? [];
 
+  // Define columns for DataGrid
+  const columns: GridColDef[] = [
+    { field: 'brand', headerName: 'Brand', width: 220, sortable: true, filterable: true },
+    { field: 'model', headerName: 'Model', width: 240, sortable: true, filterable: true },
+    {
+      field: 'color',
+      headerName: 'Color',
+      width: 140,
+      sortable: true,
+      filterable: true,
+      renderCell: (params: GridCellParams) => {
+        const value = (params.value || '').toString();
+        const bg = (() => {
+          const v = value.toLowerCase();
+          if (v.includes('red')) return '#f44336';
+          if (v.includes('black')) return '#000000';
+          if (v.includes('blue')) return '#1976d2';
+          if (v.includes('white')) return '#ffffff';
+          if (v.includes('green')) return '#2e7d32';
+          return 'rgba(255,255,255,0.08)';
+        })();
+        return (
+          <Chip
+            label={value || 'N/A'}
+            size="small"
+            sx={{
+              backgroundColor: bg,
+              color: bg === '#ffffff' ? '#000' : '#fff',
+              fontWeight: 700,
+            }}
+          />
+        );
+      },
+    },
+    { field: 'registerNumber', headerName: 'Reg. number', width: 160, sortable: true, filterable: true },
+    { field: 'year', headerName: 'Year', width: 110, sortable: true, filterable: true },
+    {
+      field: 'price',
+      headerName: 'Price',
+      width: 140,
+      sortable: true,
+      filterable: true,
+      renderCell: (params: GridCellParams) => {
+        const value = Number(params.value || 0);
+        return (
+          <Typography sx={{ fontWeight: 700, color: '#00E5FF', marginLeft: 'auto', paddingRight: 1, display: 'flex', alignItems: 'center', height: '100%' }}>
+            {value === 0 ? '-' : `$${value.toLocaleString()}`}
+          </Typography>
+        );
+      },
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 120,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      renderCell: (params: GridCellParams) => (
+        <>
+          <Tooltip title="Edit car">
+            <IconButton
+              aria-label={`edit-${params.row.id}`}
+              size="small"
+              onClick={() => handleEditClick(params.row as Car)}
+              sx={{
+                color: '#00BCD4',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 188, 212, 0.2)',
+                  color: '#00E5FF',
+                },
+              }}
+            >
+              <Edit fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete car">
+            <IconButton
+              aria-label={`delete-${params.row.id}`}
+              size="small"
+              onClick={() => handleDeleteClick(params.row as Car)}
+              sx={{
+                color: '#FF5252',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 82, 82, 0.2)',
+                  color: '#FF1744',
+                },
+              }}
+            >
+              <Delete fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </>
+      ),
+    },
+  ];
+
   return (
     <>
       <Stack direction="row" justifyContent="space-between" mb={4} alignItems="center">
@@ -162,194 +254,162 @@ export default function CarsPage() {
         >
           Cars
         </Typography>
-          <Stack direction="row" spacing={2}>
-            <Button 
-              variant="outlined" 
-              startIcon={<FileDownload />} 
-              onClick={() => exportCarsToCSV(cars, `cars-${new Date().toISOString().split('T')[0]}.csv`)}
-              disabled={cars.length === 0}
-              sx={{
-                borderColor: '#00BCD4',
-                color: '#00BCD4',
-                '&:hover': {
-                  borderColor: '#00E5FF',
-                  backgroundColor: 'rgba(0, 188, 212, 0.1)',
-                },
-                fontWeight: 600,
-                textTransform: 'none',
-                fontSize: '0.95rem',
-              }}
-            >
-              Export CSV
-            </Button>
-            <Button 
-          variant="contained" 
-          startIcon={<Add />} 
-          onClick={handleAddClick}
-          sx={{
-            background: 'linear-gradient(135deg, #00BCD4 0%, #0097A7 100%)',
-            boxShadow: '0 4px 20px rgba(0, 188, 212, 0.4)',
-            color: 'white',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #00E5FF 0%, #00BCD4 100%)',
-              boxShadow: '0 8px 30px rgba(0, 188, 212, 0.6)',
-              transform: 'translateY(-3px) scale(1.02)',
-            },
-            px: 4,
-            py: 1.5,
-            fontWeight: 700,
-            textTransform: 'none',
-            fontSize: '1rem',
-            borderRadius: 2,
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        >
-          Add car
-        </Button>
-        
+        <Stack direction="row" spacing={2}>
+          <Button 
+            variant="outlined" 
+            startIcon={<FileDownload />} 
+            onClick={() => exportCarsToCSV(cars, `cars-${new Date().toISOString().split('T')[0]}.csv`)}
+            disabled={cars.length === 0}
+            sx={{
+              borderColor: '#00BCD4',
+              color: '#00BCD4',
+              '&:hover': {
+                borderColor: '#00E5FF',
+                backgroundColor: 'rgba(0, 188, 212, 0.1)',
+              },
+              fontWeight: 600,
+              textTransform: 'none',
+              fontSize: '0.95rem',
+            }}
+          >
+            Export CSV
+          </Button>
+          <Button 
+            variant="contained" 
+            startIcon={<Add />} 
+            onClick={handleAddClick}
+            sx={{
+              background: 'linear-gradient(135deg, #00BCD4 0%, #0097A7 100%)',
+              boxShadow: '0 4px 20px rgba(0, 188, 212, 0.4)',
+              color: 'white',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #00E5FF 0%, #00BCD4 100%)',
+                boxShadow: '0 8px 30px rgba(0, 188, 212, 0.6)',
+              },
+              px: 4,
+              py: 1.5,
+              fontWeight: 700,
+              textTransform: 'none',
+              fontSize: '1rem',
+              borderRadius: 2,
+            }}
+          >
+            Add car
+          </Button>
         </Stack>
       </Stack>
 
-      <Paper
-        elevation={0}
+      <Box
         sx={{
-          borderRadius: 4,
+          height: 650,
+          width: '100%',
+          borderRadius: 3,
           overflow: 'hidden',
-          background: 'rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(0, 188, 212, 0.2)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          background: 'linear-gradient(135deg, rgba(15, 32, 60, 0.95) 0%, rgba(10, 25, 47, 0.98) 100%)',
+          border: '1px solid rgba(0, 229, 255, 0.25)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(0, 229, 255, 0.1)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '& .MuiDataGrid-root': {
+            backgroundColor: 'transparent',
+            color: '#B2EBF2',
+            border: 'none',
+            fontWeight: 500,
+          },
+          '& .MuiDataGrid-columnHeaders': {
+            backgroundColor: 'transparent !important',
+            backgroundImage: 'none !important',
+          },
+          '& .MuiDataGrid-columnHeader': {
+            background: 'transparent !important',
+            borderBottom: '2px solid rgba(0, 229, 255, 0.4)',
+            boxShadow: '0 4px 16px rgba(0, 229, 255, 0.15)',
+            '& .MuiDataGrid-columnHeaderTitle': {
+            fontWeight: 800,
+            color: '#00E5FF',
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase',
+            fontSize: '0.85rem',
+          },
+          '& .MuiDataGrid-sortIcon': {
+            opacity: 0,
+            transition: 'opacity 0.2s ease',
+          },
+          '& .MuiDataGrid-columnHeader:hover .MuiDataGrid-sortIcon': {
+            opacity: 1,
+          },
+          '& .MuiDataGrid-columnHeader--sorted .MuiDataGrid-sortIcon': {
+            opacity: 1,
+          },
+          },
+          '& .MuiDataGrid-row': {
+            borderBottom: '1px solid rgba(0, 188, 212, 0.08)',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              backgroundColor: 'rgba(0, 188, 212, 0.12)',
+              boxShadow: 'inset 0 0 20px rgba(0, 229, 255, 0.1)',
+              transform: 'scale(1.001)',
+            },
+            '&:nth-of-type(odd)': {
+              backgroundColor: 'rgba(0, 229, 255, 0.02)',
+            },
+          },
+          '& .MuiDataGrid-cell': {
+            color: '#B2EBF2',
+            fontSize: '0.95rem',
+            paddingY: '12px',
+            borderColor: 'rgba(0, 188, 212, 0.08)',
+          },
+          '& .MuiDataGrid-footerContainer': {
+            borderTop: '2px solid rgba(0, 188, 212, 0.2)',
+            background: 'linear-gradient(135deg, rgba(0, 188, 212, 0.08) 0%, rgba(0, 151, 167, 0.06) 100%)',
+            color: '#00BCD4',
+            fontWeight: 600,
+          },
+          '& .MuiTablePagination-root': {
+            color: '#00BCD4',
+            '& .MuiIconButton-root': {
+              color: '#00BCD4 !important',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 188, 212, 0.15) !important',
+              },
+            },
+          },
+          '& .MuiIconButton-root': {
+            color: '#00BCD4',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: 'rgba(0, 188, 212, 0.2)',
+              color: '#00E5FF',
+              transform: 'scale(1.1)',
+            },
+          },
+          '& .MuiToolbar-root': {
+            backgroundColor: 'rgba(0, 188, 212, 0.08)',
+            borderBottom: '1px solid rgba(0, 188, 212, 0.15)',
+            padding: '12px 16px',
+          },
         }}
       >
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ 
-                background: 'linear-gradient(135deg, rgba(0, 188, 212, 0.2) 0%, rgba(0, 151, 167, 0.2) 100%)',
-                borderBottom: '2px solid rgba(0, 188, 212, 0.3)',
-              }}>
-                <TableCell sx={{ color: '#00BCD4', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.5px' }}>Brand</TableCell>
-                <TableCell sx={{ color: '#00BCD4', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.5px' }}>Model</TableCell>
-                <TableCell sx={{ color: '#00BCD4', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.5px' }}>Color</TableCell>
-                <TableCell sx={{ color: '#00BCD4', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.5px' }}>Reg. number</TableCell>
-                <TableCell sx={{ color: '#00BCD4', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.5px' }}>Year</TableCell>
-                <TableCell align="right" sx={{ color: '#00BCD4', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.5px' }}>Price</TableCell>
-                <TableCell align="right" sx={{ color: '#00BCD4', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.5px' }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {cars.map((car, index) => (
-                <TableRow 
-                  key={car.id ?? car.registerNumber}
-                  sx={{
-                    borderBottom: '1px solid rgba(0, 188, 212, 0.1)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 188, 212, 0.08)',
-                      transform: 'scale(1.005)',
-                    },
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    animation: `fadeIn 0.4s ease ${index * 0.05}s both`,
-                    '@keyframes fadeIn': {
-                      from: { opacity: 0, transform: 'translateY(15px)' },
-                      to: { opacity: 1, transform: 'translateY(0)' },
-                    },
-                  }}
-                >
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.95rem', color: '#E0F7FA' }}>{car.brand}</TableCell>
-                  <TableCell sx={{ fontSize: '0.95rem', color: '#B2EBF2' }}>{car.model}</TableCell>
-                  <TableCell>
-                    <Box
-                      component="span"
-                      sx={{
-                        display: 'inline-block',
-                        px: 1.5,
-                        py: 0.5,
-                        borderRadius: 2,
-                        backgroundColor: car.color?.toLowerCase() || 'rgba(0, 188, 212, 0.2)',
-                        color: car.color ? 'white' : '#00BCD4',
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
-                        textTransform: 'capitalize',
-                        minWidth: 60,
-                        textAlign: 'center',
-                        border: '1px solid rgba(0, 188, 212, 0.3)',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                      }}
-                    >
-                      {car.color || 'N/A'}
-                    </Box>
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.95rem', fontWeight: 600, color: '#00BCD4' }}>
-                    {car.registerNumber}
-                  </TableCell>
-                  <TableCell sx={{ fontSize: '0.95rem', color: '#B2EBF2' }}>{car.year}</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: '1rem', color: '#00E5FF' }}>
-                    ${car.price?.toLocaleString() || '0'}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                      <Tooltip title="Edit car">
-                        <IconButton 
-                          aria-label={`edit-${car.id ?? car.registerNumber}`}
-                          size="small" 
-                          onClick={() => handleEditClick(car)}
-                          sx={{
-                            color: '#00BCD4',
-                            '&:hover': {
-                              backgroundColor: 'rgba(0, 188, 212, 0.2)',
-                              transform: 'scale(1.15) rotate(5deg)',
-                              color: '#00E5FF',
-                            },
-                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                          }}
-                        >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete car">
-                        <IconButton 
-                          aria-label={`delete-${car.id ?? car.registerNumber}`}
-                          size="small" 
-                          onClick={() => handleDeleteClick(car)}
-                          sx={{
-                            color: '#FF5252',
-                            '&:hover': {
-                              backgroundColor: 'rgba(255, 82, 82, 0.2)',
-                              transform: 'scale(1.15) rotate(-5deg)',
-                              color: '#FF1744',
-                            },
-                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                          }}
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-
-              {cars.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7}>
-                    <Typography 
-                      align="center" 
-                      sx={{ 
-                        py: 4,
-                        color: '#80DEEA',
-                        fontSize: '1.1rem',
-                        fontWeight: 500,
-                      }}
-                    >
-                      No cars found. Click "Add car" to get started!
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+        <DataGrid
+          rows={cars}
+          columns={columns}
+          pageSizeOptions={[5, 10, 25]}
+          initialState={{
+            pagination: { paginationModel: { pageSize: 10, page: 0 } },
+          }}
+          disableRowSelectionOnClick
+          slots={{ toolbar: GridToolbar }}
+          getRowId={(row) => row.id || row.registerNumber}
+          rowHeight={56}
+          density="comfortable"
+          sx={{
+            '& .MuiDataGrid-columnHeaders': {
+              minHeight: 56,
+              height: 56,
+            },
+          }}
+        />
+      </Box>
 
       <CarFormDialog
         open={openForm}

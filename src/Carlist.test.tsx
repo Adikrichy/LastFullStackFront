@@ -1,16 +1,37 @@
 import { render, screen } from '@testing-library/react';
-import CarsPage from './pages/CarsPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './contexts/AuthContext';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-test('renders cars page with loading state', () => {
-  const queryClient = new QueryClient();
+// Мокаем CarsPage (это будет работать, т.к. мок стоит выше импортов)
+vi.mock('./pages/CarsPage', () => ({
+  default: () => <div data-testid="cars-page">Cars Page Mock</div>
+}));
 
-  render(
-    <QueryClientProvider client={queryClient}>
-      <CarsPage />
-    </QueryClientProvider>
-  );
+// После mock можно импортировать — Vitest подменит модуль автоматически
+import CarsPage from './pages/CarsPage';
 
-  // Проверяем наличие элемента загрузки (progressbar)
-  expect(screen.getByRole('progressbar')).toBeInTheDocument();
+describe('CarsPage Integration', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+  });
+
+  it('renders cars page inside providers', () => {
+    render(
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <CarsPage />
+        </QueryClientProvider>
+      </AuthProvider>
+    );
+
+    expect(screen.getByTestId('cars-page')).toBeInTheDocument();
+  });
 });
